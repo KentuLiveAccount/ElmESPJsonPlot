@@ -28,24 +28,24 @@ renderModel : Model -> Html Msg
 renderModel model = case model of
    Loading -> text "Loading ..."
    Failure str -> div [] [ text ("err: " ++ str), button [ onClick GetList ] [ text "Try Again!" ] ]
-   Success str -> div [] [ text str]
+   Success str -> div [] [ text str, button [ onClick GetList ] [ text "Try Again!" ] ]
 
 -- UPDATE
-type Msg = GetList | GotList (Result Http.Error (String))
+type Msg = GetList | GotList (Result Http.Error (List Int))
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = 
     case msg of
     GetList -> (Loading, getJson)
     GotList result ->  case result of
-        Ok str -> (Success str, Cmd.none)
+        Ok lst -> (Success (Debug.toString lst), Cmd.none)
         Err err  -> (Failure (Debug.toString err), Cmd.none)
 
 getJson : Cmd Msg
 getJson = Http.get
-    { url = "https://192.168.1.39/json"
+    { url = "http://192.168.1.39/json"
     , expect = Http.expectJson GotList decodeList
     }
 
-decodeList : Decoder (String)
-decodeList = field "message" Json.Decode.string
+decodeList : Decoder (List Int)
+decodeList = field "message" (Json.Decode.list int)

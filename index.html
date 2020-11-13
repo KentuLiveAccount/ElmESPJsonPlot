@@ -5338,8 +5338,12 @@ var $author$project$Main$GotList = function (a) {
 	return {$: 'GotList', a: a};
 };
 var $elm$json$Json$Decode$field = _Json_decodeField;
-var $elm$json$Json$Decode$string = _Json_decodeString;
-var $author$project$Main$decodeList = A2($elm$json$Json$Decode$field, 'message', $elm$json$Json$Decode$string);
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $author$project$Main$decodeList = A2(
+	$elm$json$Json$Decode$field,
+	'message',
+	$elm$json$Json$Decode$list($elm$json$Json$Decode$int));
 var $elm$json$Json$Decode$decodeString = _Json_runOnString;
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
@@ -6130,7 +6134,7 @@ var $elm$http$Http$get = function (r) {
 var $author$project$Main$getJson = $elm$http$Http$get(
 	{
 		expect: A2($elm$http$Http$expectJson, $author$project$Main$GotList, $author$project$Main$decodeList),
-		url: 'https://192.168.1.39/json'
+		url: 'http://192.168.1.39/json'
 	});
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Main$Loading, $author$project$Main$getJson);
@@ -6156,9 +6160,10 @@ var $author$project$Main$update = F2(
 		} else {
 			var result = msg.a;
 			if (result.$ === 'Ok') {
-				var str = result.a;
+				var lst = result.a;
 				return _Utils_Tuple2(
-					$author$project$Main$Success(str),
+					$author$project$Main$Success(
+						$elm$core$Debug$toString(lst)),
 					$elm$core$Platform$Cmd$none);
 			} else {
 				var err = result.a;
@@ -6222,7 +6227,17 @@ var $author$project$Main$renderModel = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text(str)
+						$elm$html$Html$text(str),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$GetList)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Try Again!')
+							]))
 					]));
 	}
 };
