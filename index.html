@@ -5337,13 +5337,22 @@ var $author$project$Main$Loading = {$: 'Loading'};
 var $author$project$Main$GotList = function (a) {
 	return {$: 'GotList', a: a};
 };
+var $author$project$Main$Temps = F2(
+	function (current, target) {
+		return {current: current, target: target};
+	});
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $elm$json$Json$Decode$list = _Json_decodeList;
 var $author$project$Main$decodeList = A2(
 	$elm$json$Json$Decode$field,
 	'message',
-	$elm$json$Json$Decode$list($elm$json$Json$Decode$int));
+	$elm$json$Json$Decode$list(
+		A3(
+			$elm$json$Json$Decode$map2,
+			$author$project$Main$Temps,
+			A2($elm$json$Json$Decode$field, 'currenttemp', $elm$json$Json$Decode$int),
+			A2($elm$json$Json$Decode$field, 'targettemp', $elm$json$Json$Decode$int))));
 var $elm$json$Json$Decode$decodeString = _Json_runOnString;
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
@@ -6153,31 +6162,77 @@ var $author$project$Main$Success = function (a) {
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $elm$core$Debug$toString = _Debug_toString;
+var $author$project$Main$GetList = {$: 'GetList'};
+var $elm$http$Http$expectBytesResponse = F2(
+	function (toMsg, toResult) {
+		return A3(
+			_Http_expect,
+			'arraybuffer',
+			_Http_toDataView,
+			A2($elm$core$Basics$composeR, toResult, toMsg));
+	});
+var $elm$http$Http$expectWhatever = function (toMsg) {
+	return A2(
+		$elm$http$Http$expectBytesResponse,
+		toMsg,
+		$elm$http$Http$resolve(
+			function (_v0) {
+				return $elm$core$Result$Ok(_Utils_Tuple0);
+			}));
+};
+var $elm$http$Http$post = function (r) {
+	return $elm$http$Http$request(
+		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
+};
+var $elm$http$Http$stringBody = _Http_pair;
+var $author$project$Main$updateTemp = function (temp) {
+	return $elm$http$Http$post(
+		{
+			body: A2(
+				$elm$http$Http$stringBody,
+				'text/plain',
+				$elm$core$String$fromInt(temp)),
+			expect: $elm$http$Http$expectWhatever(
+				function (r) {
+					return $author$project$Main$GetList;
+				}),
+			url: 'http://192.168.1.39/settemp'
+		});
+};
 var $author$project$Main$update = F2(
 	function (msg, model) {
-		if (msg.$ === 'GetList') {
-			return _Utils_Tuple2($author$project$Main$Loading, $author$project$Main$getJson);
-		} else {
-			var result = msg.a;
-			if (result.$ === 'Ok') {
-				var lst = result.a;
+		switch (msg.$) {
+			case 'GetList':
+				return _Utils_Tuple2($author$project$Main$Loading, $author$project$Main$getJson);
+			case 'GotList':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var lst = result.a;
+					return _Utils_Tuple2(
+						$author$project$Main$Success(
+							$elm$core$Debug$toString(lst)),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					var err = result.a;
+					return _Utils_Tuple2(
+						$author$project$Main$Failure(
+							$elm$core$Debug$toString(err)),
+						$elm$core$Platform$Cmd$none);
+				}
+			default:
+				var temp = msg.a;
 				return _Utils_Tuple2(
-					$author$project$Main$Success(
-						$elm$core$Debug$toString(lst)),
-					$elm$core$Platform$Cmd$none);
-			} else {
-				var err = result.a;
-				return _Utils_Tuple2(
-					$author$project$Main$Failure(
-						$elm$core$Debug$toString(err)),
-					$elm$core$Platform$Cmd$none);
-			}
+					$author$project$Main$Loading,
+					$author$project$Main$updateTemp(temp));
 		}
 	});
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$h2 = _VirtualDom_node('h2');
-var $author$project$Main$GetList = {$: 'GetList'};
+var $author$project$Main$UpdateTemp = function (a) {
+	return {$: 'UpdateTemp', a: a};
+};
 var $elm$html$Html$button = _VirtualDom_node('button');
+var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -6197,6 +6252,16 @@ var $elm$html$Html$Events$onClick = function (msg) {
 };
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$string(string));
+	});
+var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$renderModel = function (model) {
 	switch (model.$) {
 		case 'Loading':
@@ -6217,7 +6282,7 @@ var $author$project$Main$renderModel = function (model) {
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('Try Again!')
+								$elm$html$Html$text('Refresh')
 							]))
 					]));
 		default:
@@ -6227,7 +6292,6 @@ var $author$project$Main$renderModel = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text(str),
 						A2(
 						$elm$html$Html$button,
 						_List_fromArray(
@@ -6236,8 +6300,28 @@ var $author$project$Main$renderModel = function (model) {
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('Try Again!')
-							]))
+								$elm$html$Html$text('Refresh')
+							])),
+						A2(
+						$elm$html$Html$input,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$type_('text'),
+								$elm$html$Html$Attributes$value('250')
+							]),
+						_List_Nil),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick(
+								$author$project$Main$UpdateTemp(250))
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Set Temperature')
+							])),
+						$elm$html$Html$text(str)
 					]));
 	}
 };
@@ -6252,7 +6336,7 @@ var $author$project$Main$view = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Random Cats')
+						$elm$html$Html$text('Themometer')
 					])),
 				$author$project$Main$renderModel(model)
 			]));
