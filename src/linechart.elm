@@ -76,7 +76,7 @@ viewAsLineChart x y w h padding title source model srzX xRangeDef yDef mzero =
                 )
                 model
             )
-        , g [ fontFamily [ "sans-serif" ], fontSize 10 ]
+        , g [ fontFamily [ "sans-serif" ], fontSize 20 ]
             (List.map
                 (\( label, vals ) ->
                     g
@@ -96,6 +96,6 @@ viewAsLineChart x y w h padding title source model srzX xRangeDef yDef mzero =
             [ Axis.bottom [ Axis.tickCount 10 ] xScale ]
         , g [ transform [ Translate (w - padding) padding ] ]
             [ Axis.left [ Axis.ticks (List.map (lastWithDefault (toFloat mzero)) (values model)) ] yScale
-            , text_ [ fontFamily [ "sans-serif" ], fontSize 10, TypedSvg.Attributes.InPx.x 5, TypedSvg.Attributes.InPx.y 5 ] [ TypedSvg.Core.text "Occurences" ]
+            , text_ [ fontFamily [ "sans-serif" ], fontSize 20, TypedSvg.Attributes.InPx.x 5, TypedSvg.Attributes.InPx.y 5 ] [ TypedSvg.Core.text "Occurences" ]
             ]
         ]
