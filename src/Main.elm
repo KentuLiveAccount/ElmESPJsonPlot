@@ -6,7 +6,7 @@ import Html exposing (Html, button, text, input, div, h2, h1, br)
 import Html.Attributes exposing (type_, value, attribute, style)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode exposing (Decoder, field, list, string, int, map2, decodeString, maybe)
+import Json.Decode exposing (Decoder, field, list, string, int, map3, decodeString, maybe)
 import LineChart exposing (viewAsLineChart)
 import TypedSvg.Core exposing (Svg)
 import Time exposing (..)
@@ -23,12 +23,14 @@ subscriptions model = Sub.none
 
 type alias Temps =
     { current : Basics.Int
+    , internal : Basics.Int
     , target : Basics.Int
     }
 
 type alias TempState =
     { temps: List Temps
     , curTemp  :  Basics.Int
+    , curIntern : Basics.Int
     , curTarget: Basics.Int
     , logs : List String
     }
@@ -58,10 +60,12 @@ viewTempsPlot : List Temps -> Svg Msg
 viewTempsPlot temps = 
     let
         currents = List.map (\x -> x.current) temps
+
+        internals = List.map (\x -> x.internal) temps
         targets = List.map (\x -> x.target) temps
         xrange = genSeq (List.length currents)
     in
-    viewAsLineChart 0 0 750 900 40 "" ""  [("Temp", currents), ("Target", targets)] xrange (0, 1) 0 0
+    viewAsLineChart 0 0 750 900 40 "" ""  [("Temp", currents), ("Internal", internals), ("Target", targets)] xrange (0, 1) 0 0
 
 renderLogs : List String -> Html Msg
 renderLogs logs = div ([style "display" "block", style "margin" "auto"] ++ smlogStyle) (List.intersperse (br [] []) <| (List.map (\x -> text x) logs))
@@ -90,9 +94,9 @@ type Msg = GetList | GotList (Result Http.Error (List Temps)) | UpdateTemp Int |
 tempStateFromList : List Temps -> List String -> TempState
 tempStateFromList temps logs =
     let
-        lastItem = Maybe.withDefault (Temps 0 0) <| List.head <| List.reverse temps
+        lastItem = Maybe.withDefault (Temps 0 0 0) <| List.head <| List.reverse temps
     in
-    TempState temps lastItem.current lastItem.target logs
+    TempState temps lastItem.current lastItem.internal lastItem.target logs
 
 updateTargetInModel : Model -> String -> Model
 updateTargetInModel model str = case model of
@@ -155,19 +159,20 @@ update msg model =
 
 getJson : Cmd Msg
 getJson = Http.get
-    { url = "http://192.168.1.39/json"
+    { url = "http://192.168.1.4/json"
     , expect = Http.expectJson GotList decodeList
     }
 
 decodeList : Decoder (List Temps)
 decodeList = field "message" (Json.Decode.list 
-    (map2 Temps
+    (map3 Temps
         (field "currenttemp" int)
+        (field "internatemp" int)
         (field "targettemp" int)))
 
 updateTemp : Int -> Cmd Msg
 updateTemp temp = Http.post
-    { url = "http://192.168.1.39/settemp"
+    { url = "http://192.168.1.4/settemp"
     , body = Http.stringBody "text/plain" (String.fromInt temp)
     , expect = Http.expectWhatever (\r -> GetList)
     }

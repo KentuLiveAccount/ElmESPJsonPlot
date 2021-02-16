@@ -5422,21 +5422,23 @@ var $author$project$Main$Loading = function (a) {
 var $author$project$Main$GotList = function (a) {
 	return {$: 'GotList', a: a};
 };
-var $author$project$Main$Temps = F2(
-	function (current, target) {
-		return {current: current, target: target};
+var $author$project$Main$Temps = F3(
+	function (current, internal, target) {
+		return {current: current, internal: internal, target: target};
 	});
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $elm$json$Json$Decode$list = _Json_decodeList;
+var $elm$json$Json$Decode$map3 = _Json_map3;
 var $author$project$Main$decodeList = A2(
 	$elm$json$Json$Decode$field,
 	'message',
 	$elm$json$Json$Decode$list(
-		A3(
-			$elm$json$Json$Decode$map2,
+		A4(
+			$elm$json$Json$Decode$map3,
 			$author$project$Main$Temps,
 			A2($elm$json$Json$Decode$field, 'currenttemp', $elm$json$Json$Decode$int),
+			A2($elm$json$Json$Decode$field, 'internatemp', $elm$json$Json$Decode$int),
 			A2($elm$json$Json$Decode$field, 'targettemp', $elm$json$Json$Decode$int))));
 var $elm$json$Json$Decode$decodeString = _Json_runOnString;
 var $elm$http$Http$BadStatus_ = F2(
@@ -6228,7 +6230,7 @@ var $elm$http$Http$get = function (r) {
 var $author$project$Main$getJson = $elm$http$Http$get(
 	{
 		expect: A2($elm$http$Http$expectJson, $author$project$Main$GotList, $author$project$Main$decodeList),
-		url: 'http://192.168.1.39/json'
+		url: 'http://192.168.1.4/json'
 	});
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
@@ -6292,9 +6294,9 @@ var $elm$time$Time$Posix = function (a) {
 };
 var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
 var $elm$time$Time$now = _Time_now($elm$time$Time$millisToPosix);
-var $author$project$Main$TempState = F4(
-	function (temps, curTemp, curTarget, logs) {
-		return {curTarget: curTarget, curTemp: curTemp, logs: logs, temps: temps};
+var $author$project$Main$TempState = F5(
+	function (temps, curTemp, curIntern, curTarget, logs) {
+		return {curIntern: curIntern, curTarget: curTarget, curTemp: curTemp, logs: logs, temps: temps};
 	});
 var $elm$core$List$head = function (list) {
 	if (list.b) {
@@ -6318,10 +6320,10 @@ var $author$project$Main$tempStateFromList = F2(
 	function (temps, logs) {
 		var lastItem = A2(
 			$elm$core$Maybe$withDefault,
-			A2($author$project$Main$Temps, 0, 0),
+			A3($author$project$Main$Temps, 0, 0, 0),
 			$elm$core$List$head(
 				$elm$core$List$reverse(temps)));
-		return A4($author$project$Main$TempState, temps, lastItem.current, lastItem.target, logs);
+		return A5($author$project$Main$TempState, temps, lastItem.current, lastItem.internal, lastItem.target, logs);
 	});
 var $author$project$Main$monthIndex = function (mo) {
 	switch (mo.$) {
@@ -6586,7 +6588,7 @@ var $author$project$Main$updateTemp = function (temp) {
 				function (r) {
 					return $author$project$Main$GetList;
 				}),
-			url: 'http://192.168.1.39/settemp'
+			url: 'http://192.168.1.4/settemp'
 		});
 };
 var $author$project$Main$update = F2(
@@ -8852,6 +8854,12 @@ var $author$project$Main$viewTempsPlot = function (temps) {
 			return x.target;
 		},
 		temps);
+	var internals = A2(
+		$elm$core$List$map,
+		function (x) {
+			return x.internal;
+		},
+		temps);
 	var currents = A2(
 		$elm$core$List$map,
 		function (x) {
@@ -8864,6 +8872,7 @@ var $author$project$Main$viewTempsPlot = function (temps) {
 		_List_fromArray(
 			[
 				_Utils_Tuple2('Temp', currents),
+				_Utils_Tuple2('Internal', internals),
 				_Utils_Tuple2('Target', targets)
 			]))(xrange)(
 		_Utils_Tuple2(0, 1))(0)(0);
