@@ -116,6 +116,12 @@ curTempFromModel model = case model of
    Failure _ -> 0
    Success ts -> ts.curTemp
 
+intTempFromModel : Model -> Int
+intTempFromModel model = case model of
+   Loading _ -> 0
+   Failure _ -> 0
+   Success ts -> ts.curIntern
+    
 monthIndex: Month -> Int
 monthIndex mo = case mo of
     Jan -> 1
@@ -153,7 +159,7 @@ update msg model =
         Err err  -> (Failure (Debug.toString err), Cmd.none)
     UpdateTemp temp -> (model, Task.perform (UpdateTempWithTime temp) (Task.map2 timeToString Time.here Time.now))
     UpdateTempWithTime temp tm -> (Loading <| 
-        ((tm ++ " Target: " ++ String.fromInt(temp) ++ ", Cur: " ++ String.fromInt(curTempFromModel model)) :: logsFromModel model)
+        ((tm ++ " Target: " ++ String.fromInt(temp) ++ ", Cur: " ++ String.fromInt(curTempFromModel model)) ++ ", Int: " ++ String.fromInt(intTempFromModel model))  :: logsFromModel model
         , updateTemp temp)
     NewTarget  str  -> (updateTargetInModel model str, Cmd.none)
 

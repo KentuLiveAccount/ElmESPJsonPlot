@@ -6275,6 +6275,17 @@ var $elm$time$Time$Zone = F2(
 	});
 var $elm$time$Time$customZone = $elm$time$Time$Zone;
 var $elm$time$Time$here = _Time_here(_Utils_Tuple0);
+var $author$project$Main$intTempFromModel = function (model) {
+	switch (model.$) {
+		case 'Loading':
+			return 0;
+		case 'Failure':
+			return 0;
+		default:
+			var ts = model.a;
+			return ts.curIntern;
+	}
+};
 var $author$project$Main$logsFromModel = function (model) {
 	switch (model.$) {
 		case 'Loading':
@@ -6632,8 +6643,9 @@ var $author$project$Main$update = F2(
 					$author$project$Main$Loading(
 						A2(
 							$elm$core$List$cons,
-							tm + (' Target: ' + ($elm$core$String$fromInt(temp) + (', Cur: ' + $elm$core$String$fromInt(
-								$author$project$Main$curTempFromModel(model))))),
+							(tm + (' Target: ' + ($elm$core$String$fromInt(temp) + (', Cur: ' + $elm$core$String$fromInt(
+								$author$project$Main$curTempFromModel(model)))))) + (', Int: ' + $elm$core$String$fromInt(
+								$author$project$Main$intTempFromModel(model))),
 							$author$project$Main$logsFromModel(model))),
 					$author$project$Main$updateTemp(temp));
 			default:
