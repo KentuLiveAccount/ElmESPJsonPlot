@@ -3,7 +3,7 @@ module Main exposing (..)
 import Debug exposing (toString)
 import Browser
 import Html exposing (Html, button, text, input, div, h2, h1, br)
-import Html.Attributes exposing (type_, value, attribute, style)
+import Html.Attributes exposing (type_, value, attribute, style, width)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode exposing (Decoder, field, float, list, string, int, map7, decodeString, maybe)
@@ -49,6 +49,7 @@ init _ = (Loading [], getJson)
 
 lgTxtStyle = [style "font-size" "2em", style "font-family" "Arial, Helvetica, sans-serif"]
 lgCtrlStyle = [style "font-size" "1.1em", style "font-family" "Arial, Helvetica, sans-serif"]
+lgInputStyle str = [style "font-size" "1.1em", style "font-family" "Arial, Helvetica, sans-serif", style "width" str]
 
 smlogStyle = [style "font-size" "0.8em", style "font-family" "Arial, Helvetica, sans-serif"]
 -- VIEW
@@ -89,7 +90,13 @@ renderModel model = case model of
         , br [][]
         ,    div [style "display" "inline"] 
                 [ text "Target: "
-                , input ([type_ "text", value (String.fromInt ts.curTarget), onInput NewTarget] ++ lgCtrlStyle) []
+                , input ([type_ "text", value (String.fromInt ts.curTarget), onInput NewTarget, width 20] ++ lgInputStyle "100px") []
+                , text "P:"
+                , input ([type_ "text", value (String.fromFloat ts.pidP), onInput NewTarget] ++ lgInputStyle "75px") []
+                , text "I:"
+                , input ([type_ "text", value (String.fromFloat ts.pidI), onInput NewTarget] ++ lgInputStyle "75px") []
+                , text "D:"
+                , input ([type_ "text", value (String.fromFloat ts.pidD), onInput NewTarget] ++ lgInputStyle "75px") []                
                 , button ([onClick (UpdateTemp ts.curTarget)] ++ lgCtrlStyle) [text "Refresh"]
                 ]
         , br [][]
