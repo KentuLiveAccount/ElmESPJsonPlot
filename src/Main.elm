@@ -6,7 +6,7 @@ import Html exposing (Html, button, text, input, div, h2, h1, br)
 import Html.Attributes exposing (type_, value, attribute, style)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode exposing (Decoder, field, list, string, int, map3, decodeString, maybe)
+import Json.Decode exposing (Decoder, field, float, list, string, int, map7, decodeString, maybe)
 import LineChart exposing (viewAsLineChart)
 import TypedSvg.Core exposing (Svg)
 import Time exposing (..)
@@ -25,6 +25,10 @@ type alias Temps =
     { current : Basics.Int
     , internal : Basics.Int
     , target : Basics.Int
+    , angle : Basics.Int
+    , pidP : Basics.Float
+    , pidI : Basics.Float
+    , pidD : Basics.Float
     }
 
 type alias TempState =
@@ -32,6 +36,10 @@ type alias TempState =
     , curTemp  :  Basics.Int
     , curIntern : Basics.Int
     , curTarget: Basics.Int
+    , angle : Basics.Int
+    , pidP : Basics.Float
+    , pidI : Basics.Float
+    , pidD : Basics.Float
     , logs : List String
     }
 type Model = Loading (List String)| Failure String  | Success TempState
@@ -63,9 +71,10 @@ viewTempsPlot temps =
 
         internals = List.map (\x -> x.internal) temps
         targets = List.map (\x -> x.target) temps
+        angles = List.map (\x -> x.angle) temps
         xrange = genSeq (List.length currents)
     in
-    viewAsLineChart 0 0 750 900 40 "" ""  [("Temp", currents), ("Internal", internals), ("Target", targets)] xrange (0, 1) 0 0
+    viewAsLineChart 0 0 750 900 40 "" ""  [("Temp", currents), ("Internal", internals), ("Target", targets), ("Angle", angles)] xrange (0, 1) 0 0
 
 renderLogs : List String -> Html Msg
 renderLogs logs = div ([style "display" "block", style "margin" "auto"] ++ smlogStyle) (List.intersperse (br [] []) <| (List.map (\x -> text x) logs))
@@ -94,9 +103,9 @@ type Msg = GetList | GotList (Result Http.Error (List Temps)) | UpdateTemp Int |
 tempStateFromList : List Temps -> List String -> TempState
 tempStateFromList temps logs =
     let
-        lastItem = Maybe.withDefault (Temps 0 0 0) <| List.head <| List.reverse temps
+        lastItem = Maybe.withDefault (Temps 0 0 0 0 0 0 0) <| List.head <| List.reverse temps
     in
-    TempState temps lastItem.current lastItem.internal lastItem.target logs
+    TempState temps lastItem.current lastItem.internal lastItem.target lastItem.angle lastItem.pidP lastItem.pidI lastItem.pidD logs
 
 updateTargetInModel : Model -> String -> Model
 updateTargetInModel model str = case model of
@@ -121,7 +130,31 @@ intTempFromModel model = case model of
    Loading _ -> 0
    Failure _ -> 0
    Success ts -> ts.curIntern
+
+angleFromModel : Model -> Int
+angleFromModel model = case model of
+    Loading _ -> 0
+    Failure _ -> 0
+    Success ts -> ts.angle
+
+pidPFromModel : Model -> Float
+pidPFromModel model = case model of
+    Loading _ -> 0
+    Failure _ -> 0
+    Success ts -> ts.pidP
     
+pidIFromModel : Model -> Float
+pidIFromModel model = case model of
+    Loading _ -> 0
+    Failure _ -> 0
+    Success ts -> ts.pidI
+
+pidDFromModel : Model -> Float
+pidDFromModel model = case model of
+    Loading _ -> 0
+    Failure _ -> 0
+    Success ts -> ts.pidD
+
 monthIndex: Month -> Int
 monthIndex mo = case mo of
     Jan -> 1
@@ -159,22 +192,32 @@ update msg model =
         Err err  -> (Failure (Debug.toString err), Cmd.none)
     UpdateTemp temp -> (model, Task.perform (UpdateTempWithTime temp) (Task.map2 timeToString Time.here Time.now))
     UpdateTempWithTime temp tm -> (Loading <| 
-        ((tm ++ " Target: " ++ String.fromInt(temp) ++ ", Cur: " ++ String.fromInt(curTempFromModel model)) ++ ", Int: " ++ String.fromInt(intTempFromModel model))  :: logsFromModel model
+        (tm ++ " Target: " ++ String.fromInt(temp)
+             ++ ", Cur: " ++ String.fromInt(curTempFromModel model)
+             ++ ", Int: " ++ String.fromInt(intTempFromModel model)
+             ++ ", Ang: " ++ String.fromInt(angleFromModel model)
+             ++ ", P: " ++ String.fromFloat(pidPFromModel model)
+             ++ ", I: " ++ String.fromFloat(pidIFromModel model)
+             ++ ", D: " ++ String.fromFloat(pidDFromModel model))  :: logsFromModel model
         , updateTemp temp)
     NewTarget  str  -> (updateTargetInModel model str, Cmd.none)
 
 getJson : Cmd Msg
 getJson = Http.get
-    { url = "http://192.168.1.4/json"
+    { url = "http://192.168.1.4/jsonpid"
     , expect = Http.expectJson GotList decodeList
     }
 
 decodeList : Decoder (List Temps)
 decodeList = field "message" (Json.Decode.list 
-    (map3 Temps
+    (map7 Temps
         (field "currenttemp" int)
         (field "internatemp" int)
-        (field "targettemp" int)))
+        (field "targettemp" int)
+        (field "angle" int)
+        (field "pidP" float)
+        (field "pidI" float)
+        (field "pidD" float)))
 
 updateTemp : Int -> Cmd Msg
 updateTemp temp = Http.post
